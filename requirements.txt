@@ -4,6 +4,8 @@
 yamcs-client==1.12.1
 fprime-xtce==0.1.3
 fprime-yamcs==0.1.5
+# Transitive dependency of yamcs-client; 1.9.1 crashes on subscription close
+websocket-client>=1.8.0,!=1.9.1,<2.0.0
 
 # Local requirements:
 -r ./lib/fprime/requirements.txt
