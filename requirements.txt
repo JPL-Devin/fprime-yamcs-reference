@@ -3,7 +3,8 @@
 
 yamcs-client==1.12.1
 fprime-xtce==0.1.3
-fprime-yamcs==0.1.5
+# SDLS support (--yamcs-sdls-key-file) is not yet in a fprime-yamcs release; pin to the merged commit
+fprime-yamcs @ git+https://github.com/fprime-community/fprime-yamcs.git@6235775a3102ba2e0b8c89c8c817b7e34cee75a5
 
 # Local requirements:
 -r ./lib/fprime/requirements.txt
