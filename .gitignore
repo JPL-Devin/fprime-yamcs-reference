@@ -21,3 +21,7 @@ __pycache__/
 
 # YAMCS runtime data
 yamcs-data/
+
+# SDLS key material
+sdls.key
+*.key

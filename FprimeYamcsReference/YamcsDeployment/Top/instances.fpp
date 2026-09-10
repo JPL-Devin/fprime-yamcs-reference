@@ -65,4 +65,7 @@ module FprimeYamcsReference {
 
   instance comDriver: Drv.Udp base id 0x10014000
 
+  @ File-backed AES-256 key source for the ComCcsdsSdls encryptor/decryptor
+  instance keyManager: Svc.Ccsds.SdlsFileKeyManager base id 0x10015000
+
 }
