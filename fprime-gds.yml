@@ -14,3 +14,5 @@
 
 
 command-line-options:
+  # 32-byte AES-256 key shared by the deployment's SdlsFileKeyManager and YAMCS (see README)
+  yamcs-sdls-key-file: sdls.key

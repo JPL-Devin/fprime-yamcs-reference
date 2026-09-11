@@ -24,7 +24,8 @@
  * @param app: name of application
  */
 void print_usage(const char* app) {
-    (void)printf("Usage: ./%s [options]\n-a\thostname/IP address\n-p\tport_number\n", app);
+    (void)printf("Usage: ./%s [options]\n-a\thostname/IP address\n-p\tport_number\n-k\tSDLS AES-256 key file (32 bytes) [default: %s]\n",
+                 app, FprimeYamcsReference::DEFAULT_SDLS_KEY_FILE);
 }
 
 /**
@@ -53,11 +54,12 @@ int main(int argc, char* argv[]) {
     I32 option = 0;
     CHAR* hostname = nullptr;
     U16 port_number = 0;
+    const CHAR* key_file = FprimeYamcsReference::DEFAULT_SDLS_KEY_FILE;
 
     Os::init();
 
     // Loop while reading the getopt supplied options
-    while ((option = getopt(argc, argv, "hp:a:")) != -1) {
+    while ((option = getopt(argc, argv, "hp:a:k:")) != -1) {
         switch (option) {
             // Handle the -a argument for address/hostname
             case 'a':
@@ -66,6 +68,10 @@ int main(int argc, char* argv[]) {
             // Handle the -p port number argument
             case 'p':
                 port_number = static_cast<U16>(atoi(optarg));
+                break;
+            // Handle the -k SDLS key file argument
+            case 'k':
+                key_file = optarg;
                 break;
             // Cascade intended: help output
             case 'h':
@@ -81,6 +87,7 @@ int main(int argc, char* argv[]) {
     FprimeYamcsReference::TopologyState inputs;
     inputs.hostname = hostname;
     inputs.port = port_number;
+    inputs.sdlsKeyFile = key_file;
 
     // Setup program shutdown via Ctrl-C
     signal(SIGINT, signalHandler);

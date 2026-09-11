@@ -2,5 +2,8 @@
 register_fprime_config(
      CONFIGURATION_OVERRIDES
          "${CMAKE_CURRENT_LIST_DIR}/CdhCoreTlmConfig.fpp"
+         "${CMAKE_CURRENT_LIST_DIR}/ComCcsdsConfig.fpp"
+         "${CMAKE_CURRENT_LIST_DIR}/ComCcsdsSdlsConfig.fpp"
+         "${CMAKE_CURRENT_LIST_DIR}/ComCfg.fpp"
      INTERFACE
 )

@@ -16,7 +16,7 @@ module FprimeYamcsReference {
   # Subtopology instances
   # ----------------------------------------------------------------------
     instance CdhCore.Subtopology
-    instance ComCcsds.Subtopology
+    instance ComCcsdsSdls.Subtopology
     instance DataProducts.Subtopology
     instance FileHandling.Subtopology
     
@@ -32,6 +32,7 @@ module FprimeYamcsReference {
     instance timer
     instance comDriver
     instance cmdSeq
+    instance keyManager
 
   # ----------------------------------------------------------------------
   # Pattern graph specifiers
@@ -55,39 +56,45 @@ module FprimeYamcsReference {
   # Direct graph specifiers
   # ----------------------------------------------------------------------
 
-    connections ComCcsds_CdhCore {
+    connections ComCcsdsSdls_CdhCore {
       # Core events and telemetry to communication queue
-      CdhCore.Subtopology.eventsPktSend -> ComCcsds.Subtopology.comPacketQueueIn[ComCcsds.Ports_ComPacketQueue.EVENTS]
-      CdhCore.Subtopology.tlmSendPktSend -> ComCcsds.Subtopology.comPacketQueueIn[ComCcsds.Ports_ComPacketQueue.TELEMETRY]
+      CdhCore.Subtopology.eventsPktSend -> ComCcsdsSdls.Subtopology.comPacketQueueIn[ComCcsds.Ports_ComPacketQueue.EVENTS]
+      CdhCore.Subtopology.tlmSendPktSend -> ComCcsdsSdls.Subtopology.comPacketQueueIn[ComCcsds.Ports_ComPacketQueue.TELEMETRY]
 
       # Router to Command Dispatcher
-      ComCcsds.Subtopology.commandOut -> CdhCore.Subtopology.seqCmdBuff
-      CdhCore.Subtopology.seqCmdStatus -> ComCcsds.Subtopology.cmdResponseIn
+      ComCcsdsSdls.Subtopology.commandOut -> CdhCore.Subtopology.seqCmdBuff
+      CdhCore.Subtopology.seqCmdStatus -> ComCcsdsSdls.Subtopology.cmdResponseIn
 
     }
 
-    connections ComCcsds_FileHandling {
+    connections ComCcsdsSdls_FileHandling {
       # File Downlink to Communication Queue
-      FileHandling.Subtopology.fileDownlinkBufferSendOut -> ComCcsds.Subtopology.bufferQueueIn[ComCcsds.Ports_ComBufferQueue.FILE]
-      ComCcsds.Subtopology.bufferReturnOut[ComCcsds.Ports_ComBufferQueue.FILE] -> FileHandling.Subtopology.fileDownlinkBufferReturn
+      FileHandling.Subtopology.fileDownlinkBufferSendOut -> ComCcsdsSdls.Subtopology.bufferQueueIn[ComCcsds.Ports_ComBufferQueue.FILE]
+      ComCcsdsSdls.Subtopology.bufferReturnOut[ComCcsds.Ports_ComBufferQueue.FILE] -> FileHandling.Subtopology.fileDownlinkBufferReturn
 
       # Router to File Uplink
-      ComCcsds.Subtopology.fileUplinkOut -> FileHandling.Subtopology.fileUplinkBufferSendIn
-      FileHandling.Subtopology.fileUplinkBufferSendOut -> ComCcsds.Subtopology.fileUplinkReturnIn
+      ComCcsdsSdls.Subtopology.fileUplinkOut -> FileHandling.Subtopology.fileUplinkBufferSendIn
+      FileHandling.Subtopology.fileUplinkBufferSendOut -> ComCcsdsSdls.Subtopology.fileUplinkReturnIn
     }
 
     connections Communications {
       # ComDriver buffer allocations
-      comDriver.allocate      -> ComCcsds.Subtopology.commsBufferGetCallee
-      comDriver.deallocate    -> ComCcsds.Subtopology.commsBufferSendIn
+      comDriver.allocate      -> ComCcsdsSdls.Subtopology.commsBufferGetCallee
+      comDriver.deallocate    -> ComCcsdsSdls.Subtopology.commsBufferSendIn
 
       # ComDriver <-> ComStub (Uplink)
-      comDriver.$recv                     -> ComCcsds.Subtopology.drvReceiveIn
-      ComCcsds.Subtopology.drvReceiveReturnOut -> comDriver.recvReturnIn
+      comDriver.$recv                     -> ComCcsdsSdls.Subtopology.drvReceiveIn
+      ComCcsdsSdls.Subtopology.drvReceiveReturnOut -> comDriver.recvReturnIn
 
       # ComStub <-> ComDriver (Downlink)
-      ComCcsds.Subtopology.drvSendOut      -> comDriver.$send
-      comDriver.ready         -> ComCcsds.Subtopology.drvConnected
+      ComCcsdsSdls.Subtopology.drvSendOut      -> comDriver.$send
+      comDriver.ready         -> ComCcsdsSdls.Subtopology.drvConnected
+    }
+
+    connections SdlsKeys {
+      # AES-256-GCM key requests from the SDLS encryptor/decryptor to the file-backed key manager
+      ComCcsdsSdls.decryptor.keyGet -> keyManager.keyGet
+      ComCcsdsSdls.encryptor.keyGet -> keyManager.keyGet
     }
 
     connections FileHandling_DataProducts {
@@ -105,8 +112,8 @@ module FprimeYamcsReference {
       rateGroup1.RateGroupMemberOut[0] -> CdhCore.Subtopology.tlmSendRun
       rateGroup1.RateGroupMemberOut[1] -> FileHandling.Subtopology.fileDownlinkRun
       rateGroup1.RateGroupMemberOut[2] -> systemResources.run
-      rateGroup1.RateGroupMemberOut[3] -> ComCcsds.Subtopology.comQueueRun
-      rateGroup1.RateGroupMemberOut[4] -> ComCcsds.Subtopology.aggregatorTimeout
+      rateGroup1.RateGroupMemberOut[3] -> ComCcsdsSdls.Subtopology.comQueueRun
+      rateGroup1.RateGroupMemberOut[4] -> ComCcsdsSdls.Subtopology.aggregatorTimeout
       rateGroup1.RateGroupMemberOut[5] -> FileHandling.Subtopology.fileManagerSchedIn
       rateGroup1.RateGroupMemberOut[6] -> CdhCore.Subtopology.cmdDispRun
 
@@ -117,7 +124,7 @@ module FprimeYamcsReference {
       # Rate group 3
       rateGroupDriver.CycleOut[Ports_RateGroups.rateGroup3] -> rateGroup3.CycleIn
       rateGroup3.RateGroupMemberOut[0] -> CdhCore.Subtopology.healthRun
-      rateGroup3.RateGroupMemberOut[1] -> ComCcsds.Subtopology.bufferManagerSchedIn
+      rateGroup3.RateGroupMemberOut[1] -> ComCcsdsSdls.Subtopology.bufferManagerSchedIn
       rateGroup3.RateGroupMemberOut[2] -> DataProducts.Subtopology.dpBufferManagerSchedIn
       rateGroup3.RateGroupMemberOut[3] -> DataProducts.Subtopology.dpWriterSchedIn
       rateGroup3.RateGroupMemberOut[4] -> DataProducts.Subtopology.dpMgrSchedIn

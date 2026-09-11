@@ -39,7 +39,7 @@ enum TopologyConstants {
  * allocating resources, passing-in arguments, etc. This function may be inlined into the topology setup function if
  * desired, but is extracted here for clarity.
  */
-void configureTopology() {
+void configureTopology(const TopologyState& state) {
     // Rate group driver needs a divisor list
     rateGroupDriver.configure(rateGroupDivisorsSet);
 
@@ -53,6 +53,9 @@ void configureTopology() {
 
     // Configure parameter database
     FileHandling::prmDb.configure("PrmDb.dat");
+
+    // File-backed AES-256 key shared by the SDLS encryptor/decryptor and YAMCS
+    keyManager.configure(state.sdlsKeyFile, SDLS_KEY_SIZE);
 }
 
 void setupTopology(const TopologyState& state) {
@@ -75,7 +78,7 @@ void setupTopology(const TopologyState& state) {
         comDriver.configureRecv(hostname, state.port + 1);
     }
     // Project-specific component configuration. Function provided above. May be inlined, if desired.
-    configureTopology();
+    configureTopology(state);
     // Autocoded parameter loading. Function provided by autocoder.
     loadParameters();
     // Autocoded task kick-off (active components). Function provided by autocoder.

@@ -12,6 +12,8 @@ project(FprimeYamcsReference C CXX)
 ###
 include("${CMAKE_CURRENT_LIST_DIR}/lib/fprime/cmake/FPrime.cmake")
 # NOTE: register custom targets between these two lines
+# OpenSSL::Crypto backs Svc.Ccsds.AesGcmEncryptor/Decryptor; import it here so the deployment can link it
+find_package(OpenSSL 3.5 REQUIRED)
 fprime_setup_included_code()
 
 
