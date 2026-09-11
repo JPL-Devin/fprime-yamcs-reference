@@ -8,7 +8,7 @@ This is a basic project that shows F Prime/YAMCS integration. It has two key fea
 
 ## Building
 
-The AES-GCM components require OpenSSL 3.5 or newer. If it is not the system default, point CMake at it with
+The AES-GCM components require OpenSSL 3.0 or newer. If it is not the system default, point CMake at it with
 `-DOPENSSL_ROOT_DIR=/path/to/openssl` when generating.
 
 Building is done in the standard F Prime way:
