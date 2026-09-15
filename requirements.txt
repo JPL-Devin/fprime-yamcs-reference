@@ -1,4 +1,4 @@
-# F Prime tooling matching lib/fprime (v4.3.0), pinned here rather than via `-r ./lib/fprime/requirements.txt`
+# F Prime tooling matching lib/fprime/requirements.txt, pinned here rather than via `-r ./lib/fprime/requirements.txt`
 # because the framework pins fprime-gds==4.3.0 and fprime-yamcs needs fprime-gds>=4.4.0a2 (tcp-fast bridge).
 fprime-tools==4.3.0
 fprime-fpp==3.3.0
