@@ -9,8 +9,9 @@ This is a basic project that shows F Prime/YAMCS integration. It has two key fea
 ## Building
 
 Install the tooling into a virtual environment first: `python3 -m venv fprime-venv && . fprime-venv/bin/activate &&
-pip install -r requirements.txt`. `requirements.txt` pins the F Prime tooling directly rather than including
-`lib/fprime/requirements.txt`, because `fprime-yamcs` needs a newer `fprime-gds` than the framework pins.
+pip install -r requirements.txt && pip install -r overrides.txt`. `requirements.txt` includes the framework's
+`lib/fprime/requirements.txt`; `overrides.txt`, installed second, carries the packages that must be newer than the
+framework pins (`fprime-gds`, `fprime-yamcs`). The two cannot be resolved in one `pip install`.
 
 The AES-GCM components require OpenSSL 3.0 or newer. If it is not the system default, point CMake at it with
 `-DOPENSSL_ROOT_DIR=/path/to/openssl` when generating.

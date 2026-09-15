@@ -1,11 +1,10 @@
-# F Prime tooling matching lib/fprime/requirements.txt, pinned here rather than via `-r ./lib/fprime/requirements.txt`
-# because the framework pins fprime-gds==4.3.0 and fprime-yamcs needs fprime-gds>=4.4.0a3 (tcp-fast bridge, list-form application-arguments).
-fprime-tools==4.3.0
-fprime-fpp==3.3.0
-fprime-gds==4.4.0a3
-cmake==3.26.0
+# Source tag requirements:
+# -r https://raw.githubusercontent.com/nasa/fprime/refs/tags/v4.3.0/requirements.txt
 
 yamcs-client==1.12.1
 fprime-xtce==0.1.3
-# Release wheel required: git installs lack the prebuilt YAMCS plugin jar and fall back to a Maven/JDK build
-fprime-yamcs>=0.2.1
+
+# Local requirements:
+-r ./lib/fprime/requirements.txt
+
+# Packages newer than the framework pins live in overrides.txt; install it second.
