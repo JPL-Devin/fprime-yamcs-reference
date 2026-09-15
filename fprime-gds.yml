@@ -18,3 +18,6 @@ command-line-options:
   communication-selection: udp
   # 32-byte AES-256 key shared by the deployment's SdlsFileKeyManager and YAMCS (see README)
   yamcs-sdls-key-file: sdls.key
+  # Replaces the default -p/-a deployment arguments; -k hands the deployment the same key.
+  # fprime-gds runs the binary from its own directory (build-artifacts/<platform>/<deployment>/bin), hence the ../ path
+  application-arguments: ["-p", "50000", "-a", "0.0.0.0", "-k", "../../../../sdls.key"]

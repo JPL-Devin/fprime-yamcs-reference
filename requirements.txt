@@ -2,7 +2,7 @@
 # because the framework pins fprime-gds==4.3.0 and fprime-yamcs needs fprime-gds>=4.4.0a2 (tcp-fast bridge).
 fprime-tools==4.3.0
 fprime-fpp==3.3.0
-fprime-gds==4.4.0a2
+fprime-gds==4.4.0a3
 cmake==3.26.0
 
 yamcs-client==1.12.1

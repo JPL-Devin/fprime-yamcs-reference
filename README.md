@@ -33,5 +33,6 @@ head -c 32 /dev/urandom > sdls.key
 Then run `fprime-yamcs` and open `http://localhost:8090` in your browser! `fprime-gds.yml` passes
 `--communication-selection udp`, so the deployment's `Drv.Udp` talks to YAMCS directly instead of through the
 `fprime-yamcs-comm` bridge that `fprime-yamcs` starts by default for TCP/UART deployments, and
-`--yamcs-sdls-key-file sdls.key`, which configures YAMCS to decrypt TM/encrypt TC on SPI 1 and launches the
-deployment with `-k sdls.key`. Running the binary by hand: `./FprimeYamcsReference_YamcsDeployment -a 127.0.0.1 -p 50000 -k sdls.key`.
+`--yamcs-sdls-key-file sdls.key`, which configures YAMCS to decrypt TM/encrypt TC on SPI 1, and
+`--application-arguments -p 50000 -a 0.0.0.0 -k sdls.key`, which launches the deployment with the same key.
+Running the binary by hand: `./FprimeYamcsReference_YamcsDeployment -a 127.0.0.1 -p 50000 -k sdls.key`.
