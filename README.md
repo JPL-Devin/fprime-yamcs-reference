@@ -8,6 +8,10 @@ This is a basic project that shows F Prime/YAMCS integration. It has two key fea
 
 ## Building
 
+Install the tooling into a virtual environment first: `python3 -m venv fprime-venv && . fprime-venv/bin/activate &&
+pip install -r requirements.txt`. `requirements.txt` pins the F Prime tooling directly rather than including
+`lib/fprime/requirements.txt`, because `fprime-yamcs` needs a newer `fprime-gds` than the framework pins.
+
 The AES-GCM components require OpenSSL 3.0 or newer. If it is not the system default, point CMake at it with
 `-DOPENSSL_ROOT_DIR=/path/to/openssl` when generating.
 
@@ -27,5 +31,7 @@ head -c 32 /dev/urandom > sdls.key
 ```
 
 Then run `fprime-yamcs` and open `http://localhost:8090` in your browser! `fprime-gds.yml` passes
+`--communication-selection udp`, so the deployment's `Drv.Udp` talks to YAMCS directly instead of through the
+`fprime-yamcs-comm` bridge that `fprime-yamcs` starts by default for TCP/UART deployments, and
 `--yamcs-sdls-key-file sdls.key`, which configures YAMCS to decrypt TM/encrypt TC on SPI 1 and launches the
 deployment with `-k sdls.key`. Running the binary by hand: `./FprimeYamcsReference_YamcsDeployment -a 127.0.0.1 -p 50000 -k sdls.key`.
