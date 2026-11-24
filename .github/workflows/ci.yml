@@ -1,0 +1,137 @@
+# Runs on this repository's pushes/PRs and on dispatch from the nasa/fprime external-CI orchestrator,
+# which overlays an exact F´ commit under lib/fprime. Dispatched runs build untrusted code: no secrets, no cache writes.
+name: CI
+run-name: ${{ github.event_name == 'workflow_dispatch' && inputs.dispatch_id != '' && format('ext-ci {0} ({1}@{2})', inputs.dispatch_id, inputs.fprime_repository, inputs.fprime_ref) || '' }}
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      fprime_repository:
+        description: "F´ repository to overlay under lib/fprime (<owner>/<repo>); a fork for fork PRs"
+        type: string
+        default: nasa/fprime
+      fprime_ref:
+        description: "F´ ref to overlay; the orchestrator passes an exact commit SHA"
+        type: string
+        default: devel
+      fprime_pr_number:
+        description: "nasa/fprime PR number being tested (empty for branch runs); used to pick nasa/fprime-gds@pr-<N>"
+        type: string
+        default: ""
+      dispatch_id:
+        description: "Correlation id set by the orchestrator (informational)"
+        type: string
+        default: ""
+
+concurrency:
+  group: ${{ github.workflow }}-${{ inputs.dispatch_id || github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: "Build and Integration Tests"
+    runs-on: ubuntu-22.04
+    steps:
+      - name: "Setup output-cleaner"
+        uses: nasa/fprime-actions/output-cleaner@devel
+      - name: "Checkout project"
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: "Overlay requested F´ revision"
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.fprime_repository }}
+          ref: ${{ inputs.fprime_ref }}
+          path: lib/fprime
+          submodules: true
+          fetch-depth: 0
+          filter: blob:none
+      - name: "Setup F´ toolchain"
+        uses: nasa/fprime-actions/setup@devel
+        with:
+          location: lib/fprime
+          ccache: ${{ github.event_name != 'workflow_dispatch' }}
+      - name: "Install project requirements"
+        run: |
+          pip install -r requirements.txt
+          if [ -f overrides.txt ]; then pip install -r overrides.txt; fi
+        shell: bash
+      - name: "Upgrade fprime-gds to pr-<N> (if the F´ PR has a matching GDS branch)"
+        if: github.event_name == 'workflow_dispatch' && inputs.fprime_pr_number != ''
+        shell: bash
+        env:
+          PR_NUMBER: ${{ inputs.fprime_pr_number }}
+        run: |
+          set -euo pipefail
+          [[ "${PR_NUMBER}" =~ ^[0-9]+$ ]] || { echo "::error::fprime_pr_number must be numeric"; exit 1; }
+          code=$(curl -s -o /dev/null -w '%{http_code}' "https://api.github.com/repos/nasa/fprime-gds/branches/pr-${PR_NUMBER}")
+          if [ "${code}" = "200" ]; then
+            echo "Installing nasa/fprime-gds@pr-${PR_NUMBER}"
+            pip install --upgrade "git+https://github.com/nasa/fprime-gds.git@pr-${PR_NUMBER}"
+          else
+            echo "No nasa/fprime-gds pr-${PR_NUMBER} branch (HTTP ${code}); keeping the pinned version"
+          fi
+      - name: "Generate build cache"
+        working-directory: FprimeYamcsReference/YamcsDeployment
+        run: fprime-util generate 2>&1 | output-cleaner
+        shell: bash
+      - name: "Build"
+        working-directory: FprimeYamcsReference/YamcsDeployment
+        run: fprime-util build -j8 2>&1 | output-cleaner
+        shell: bash
+      - name: "Setup Java 17 for YAMCS"
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      # Shared by YAMCS (fprime-gds.yml: yamcs-sdls-key-file) and the deployment (fprime-gds.yml: application-arguments -k)
+      - name: "Generate SDLS AES-256 key"
+        run: head -c 32 /dev/urandom > sdls.key
+      - name: "Run integration tests"
+        uses: nasa/fprime-actions/run-integration-tests@devel
+        with:
+          ground-system: fprime-yamcs
+          gds-working-directory: "."
+          test-working-directory: "."
+          binary: ./build-artifacts/Linux/FprimeYamcsReference_YamcsDeployment/bin/FprimeYamcsReference_YamcsDeployment
+          # Absolute path needed because YAMCS passes this down to a subprocess
+          gds-args: -d ${{ github.workspace }}/build-artifacts/Linux/FprimeYamcsReference_YamcsDeployment
+          ready-check: python -c "from yamcs.client import YamcsClient; list(YamcsClient('127.0.0.1:8090').list_instances())"
+          ready-timeout: "300"
+          timeout: "1800"
+          pytest-args: >-
+            --dictionary ./build-artifacts/Linux/FprimeYamcsReference_YamcsDeployment/dict/YamcsDeploymentTopologyDictionary.json
+            --deployment-config ./FprimeYamcsReference/YamcsDeployment/test/int/int_config.json
+            --use-yamcs
+            -v
+            ./FprimeYamcsReference/YamcsDeployment/test/int/test_yamcs_file_transfer.py
+            ./lib/fprime/Svc/PrmDb/test/int/test_cmd_PrmDb.py
+            ./lib/fprime/Svc/CmdDispatcher/test/int/test_cmd_dispatcher.py
+            ./lib/fprime/Svc/DpCatalog/test/int/test_cmd_dpCatalog.py
+            ./lib/fprime/Svc/DpManager/test/int/test_cmd_dpMgr.py
+            ./lib/fprime/Svc/DpWriter/test/int/test_cmd_dpWriter.py
+            ./lib/fprime/Svc/EventManager/test/int/test_cmd_eventManager.py
+            ./lib/fprime/Svc/FileDownlink/test/int/test_cmd_fileDownlink.py
+            ./lib/fprime/Svc/FileManager/test/int/test_cmd_fileManager.py
+            ./lib/fprime/Svc/SystemResources/test/int/test_cmd_systemResources.py
+            ./lib/fprime/Svc/CmdSequencer/test/int/test_cmd_sequencer.py
+            ./lib/fprime/Svc/FileUplink/test/int/test_cmd_uplink.py
+            ./lib/fprime/Svc/Subtopologies/CdhCore/test/int/test_cdh_core.py
+            ./lib/fprime/Svc/Subtopologies/FileHandling/test/int/test_file_handling.py
+            ./lib/fprime/Svc/Version/test/int/test_cmd_version.py
+            ./lib/fprime/Svc/Health/test/int/test_cmd_health.py
+      - name: "Archive test logs"
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-logs
+          path: gds-logs
+          retention-days: 5
